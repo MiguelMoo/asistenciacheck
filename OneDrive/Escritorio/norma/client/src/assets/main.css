@@ -1,0 +1,9 @@
+/* src/assets/main.css o src/style.css */
+@import 'tailwindcss'; /* Importa Tailwind CSS */
+
+/* Opcional: Tus estilos base personalizados aquí */
+/* @tailwind base; */
+/* @tailwind components; */
+/* @tailwind utilities; */
+
+/* Es importante usar `@import 'tailwindcss';` en Tailwind CSS v4 para una integración más limpia. */
