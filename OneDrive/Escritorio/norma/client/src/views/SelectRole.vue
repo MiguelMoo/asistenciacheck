@@ -1,7 +1,9 @@
 <template>
   <div class="container mt-5">
     <div class="text-center">
-      <h2>Bienvenido a<br /><strong>*nombre de la app*</strong></h2>
+      <h2></h2>
+            <h2 class="text-4xl font-extrabold text-center mb-8 text-gray-900">Bienvenido a<br /><strong>ListApp</strong></h2>
+
       <p class="mt-2">Escoge cómo deseas acceder</p>
     </div>
 
