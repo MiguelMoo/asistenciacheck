@@ -1,47 +1,34 @@
 <template>
   <div class="min-h-screen flex flex-col md:flex-row">
-    <div
-      class="hidden md:flex flex-col md:w-52 md:h-[90vh] md:sticky md:top-4
-             p-3 border border-gray-400/20 rounded-2xl shadow-lg bg-white m-4"
-    >
+    <div class="hidden md:flex flex-col md:w-52 md:h-[90vh] md:sticky md:top-4
+             p-3 border border-gray-400/20 rounded-2xl shadow-lg bg-white m-4">
       <nav class="flex-1 flex flex-col p-2">
         <ul class="flex-1">
           <li v-for="item in menuItems" :key="item.label" class="mb-2 group">
-            <button
-              @click="changeView(item.view)"
-              :class="[
-                'w-full px-2 py-2 rounded flex items-center justify-start gap-2 relative transition-colors duration-200 ease-in-out',
-                currentView === item.view ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-blue-600'
-              ]"
-            >
+            <button @click="changeView(item.view)" :class="[
+              'w-full px-2 py-2 rounded flex items-center justify-start gap-2 relative transition-colors duration-200 ease-in-out',
+              currentView === item.view ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-blue-600'
+            ]">
               <component :is="item.icon" class="h-5 w-5 flex-shrink-0" />
-              <span
-                :class="[
-                  'whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out',
-                  'md:absolute md:left-8 md:opacity-0 md:w-0',
-                  'group-hover:md:opacity-100 group-hover:md:w-auto'
-                ]"
-                class="md:inline"
-              >
+              <span :class="[
+                'whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out',
+                'md:absolute md:left-8 md:opacity-0 md:w-0',
+                'group-hover:md:opacity-100 group-hover:md:w-auto'
+              ]" class="md:inline">
                 {{ item.label }}
               </span>
             </button>
           </li>
         </ul>
 
-        <button
-          @click="handleLogout"
-          class="mt-auto w-full px-2 py-2 rounded flex items-center justify-start gap-2 group relative transition-colors duration-200 ease-in-out text-gray-700 hover:bg-red-100 hover:text-red-600"
-        >
+        <button @click="handleLogout"
+          class="mt-auto w-full px-2 py-2 rounded flex items-center justify-start gap-2 group relative transition-colors duration-200 ease-in-out text-gray-700 hover:bg-red-100 hover:text-red-600">
           <ArrowLeftOnRectangleIcon class="h-5 w-5 flex-shrink-0" />
-          <span
-            :class="[
-              'whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out',
-              'md:absolute md:left-8 md:opacity-0 md:w-0',
-              'group-hover:md:opacity-100 group-hover:md:w-auto'
-            ]"
-            class="md:inline"
-          >
+          <span :class="[
+            'whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out',
+            'md:absolute md:left-8 md:opacity-0 md:w-0',
+            'group-hover:md:opacity-100 group-hover:md:w-auto'
+          ]" class="md:inline">
             Cerrar Sesión
           </span>
         </button>
@@ -59,19 +46,15 @@
         </h2>
 
         <div v-if="role === 'profesor' && currentView === 'Clases'">
-          <button
-            @click="showModal = true; resetFormulario()"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-lg"
-          >
+          <button @click="showModal = true; resetFormulario()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-lg">
             + Agregar Clase
           </button>
         </div>
 
         <div v-if="role === 'alumno' && currentView === 'MisClases'">
-          <button
-            @click="showJoinClassModal = true; joinClassCode = '';"
-            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow-lg"
-          >
+          <button @click="showJoinClassModal = true; joinClassCode = '';"
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow-lg">
             Unirse
           </button>
         </div>
@@ -91,10 +74,28 @@
             <ul class="list-disc list-inside">
               <li v-for="(horario, dia) in clase.horarios" :key="dia">{{ dia }}: {{ horario }}</li>
             </ul>
-            <div class="mt-4">
-              <button @click="editarClase(clase)" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm">
+            <div class="mt-4 flex gap-2">
+              <button @click="editarClase(clase)"
+                class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm">
                 Editar
               </button>
+              <button @click="generarQrAsistencia(clase)"
+                class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">
+                Generar QR Asistencia
+              </button>
+            </div>
+
+            <div v-if="showQrModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div class="bg-white rounded-lg max-w-sm w-full p-6 relative shadow-lg text-center">
+                <h3 class="text-2xl font-bold mb-4">QR de Asistencia</h3>
+                <p class="mb-4">Escanea este código para marcar asistencia en: <strong>{{ qrClaseNombre }}</strong></p>
+                <div class="flex justify-center mb-6">
+                  <qrcode-vue :value="qrData" :size="250" level="H" />
+                </div>
+                <button @click="showQrModal = false" class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">
+                  Cerrar
+                </button>
+              </div>
             </div>
           </li>
         </ul>
@@ -120,24 +121,23 @@
         <div v-else class="text-gray-500">No estás inscrito en ninguna clase. ¡Usa el botón "Unirse" para empezar!</div>
       </div>
 
-      <component v-else :is="currentViewComponent" />
+      <component v-else :is="currentViewComponent" @qr-scanned="handleQrScanned" />
     </main>
 
-    <div
-      v-if="showModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    >
+    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg max-w-3xl w-full p-6 relative shadow-lg max-h-[90vh] overflow-auto">
         <h3 class="text-2xl font-bold mb-6">{{ editando ? 'Editar Clase' : 'Clases - agregar clase' }}</h3>
         <form @submit.prevent="guardarClase">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block font-medium text-sm mb-1">Nombre de la clase*</label>
-              <input v-model="form.nombreClase" required class="w-full border px-3 py-2 rounded" placeholder="Nombre de la clase" />
+              <input v-model="form.nombreClase" required class="w-full border px-3 py-2 rounded"
+                placeholder="Nombre de la clase" />
             </div>
             <div>
               <label class="block font-medium text-sm mb-1">%mín asistencias*</label>
-              <input v-model.number="form.minAsistencias" type="number" min="0" required class="w-full border px-3 py-2 rounded" placeholder="% min asistencias" />
+              <input v-model.number="form.minAsistencias" type="number" min="0" required
+                class="w-full border px-3 py-2 rounded" placeholder="% min asistencias" />
             </div>
             <div>
               <label class="block font-medium text-sm mb-1">Grado y grupo</label>
@@ -150,7 +150,8 @@
 
           <div class="mt-4">
             <label class="block font-medium text-sm mb-1">Nombre de la carrera</label>
-            <input v-model="form.nombreCarrera" required class="w-full border px-3 py-2 rounded" placeholder="Nombre de la carrera" />
+            <input v-model="form.nombreCarrera" required class="w-full border px-3 py-2 rounded"
+              placeholder="Nombre de la carrera" />
           </div>
 
           <div class="mt-6">
@@ -173,7 +174,8 @@
           </div>
 
           <div class="mt-6 flex justify-end gap-3">
-            <button type="button" @click="showModal = false" class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">
+            <button type="button" @click="showModal = false"
+              class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">
               Cancelar
             </button>
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded" :disabled="saving">
@@ -184,22 +186,23 @@
       </div>
     </div>
 
-    <div
-      v-if="showJoinClassModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    >
+    <div v-if="showJoinClassModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg max-w-md w-full p-6 relative shadow-lg">
         <h3 class="text-2xl font-bold mb-4">Unirse a una clase</h3>
         <form @submit.prevent="unirseAClase">
           <div class="mb-4">
             <label class="block font-medium text-sm mb-1">Código de la clase</label>
-            <input v-model="joinClassCode" type="text" required class="w-full border px-3 py-2 rounded text-center text-lg font-mono tracking-widest uppercase" placeholder="EJ: ABC123" maxlength="6" />
+            <input v-model="joinClassCode" type="text" required
+              class="w-full border px-3 py-2 rounded text-center text-lg font-mono tracking-widest uppercase"
+              placeholder="EJ: ABC123" maxlength="6" />
           </div>
           <div class="flex justify-end gap-3">
-            <button type="button" @click="showJoinClassModal = false" class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">
+            <button type="button" @click="showJoinClassModal = false"
+              class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">
               Cancelar
             </button>
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded" :disabled="joining">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
+              :disabled="joining">
               {{ joining ? 'Uniéndose...' : 'Unirse' }}
             </button>
           </div>
@@ -207,53 +210,39 @@
       </div>
     </div>
 
-    <nav
-      v-if="role"
-      class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 flex justify-around items-center px-4 py-2 md:hidden z-10"
-    >
-      <button
-        @click="changeView(leftButton.view)"
-        :class="[
-          'flex-1 text-center flex flex-col items-center justify-center p-1 group relative transition-colors duration-200 ease-in-out',
-          currentView === leftButton.view ? 'text-blue-500' : 'text-gray-700 hover:text-blue-600'
-        ]"
-      >
+    <nav v-if="role"
+      class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 flex justify-around items-center px-4 py-2 md:hidden z-10">
+      <button @click="changeView(leftButton.view)" :class="[
+        'flex-1 text-center flex flex-col items-center justify-center p-1 group relative transition-colors duration-200 ease-in-out',
+        currentView === leftButton.view ? 'text-blue-500' : 'text-gray-700 hover:text-blue-600'
+      ]">
         <component :is="leftButton.icon" class="h-6 w-6" />
         <span
-          class="text-xs absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out pointer-events-none"
-        >
+          class="text-xs absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out pointer-events-none">
           {{ leftButton.label }}
         </span>
       </button>
 
-      <button
-        @click="changeView(centerButton.view)"
-        :class="[
-          'p-3 rounded-full shadow-lg -translate-y-4 flex items-center justify-center group relative transition-colors duration-200 ease-in-out',
-          currentView === centerButton.view
-            ? 'bg-blue-500 text-white'
-            : 'bg-white text-gray-700 hover:bg-gray-100'
-        ]"
-      >
+      <button @click="changeView(centerButton.view)" :class="[
+        'p-3 rounded-full shadow-lg -translate-y-4 flex items-center justify-center group relative transition-colors duration-200 ease-in-out',
+        currentView === centerButton.view
+          ? 'bg-blue-500 text-white'
+          : 'bg-white text-gray-700 hover:bg-gray-100'
+      ]">
         <component :is="centerButton.icon" class="h-6 w-6" />
         <span v-if="centerButton.label"
-          class="text-xs absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out pointer-events-none"
-        >
+          class="text-xs absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out pointer-events-none">
           {{ centerButton.label }}
         </span>
       </button>
 
-      <button
-        @click="changeView(rightButton.view)"
-        :class="[
-          'flex-1 text-center flex flex-col items-center justify-center p-1 group relative transition-colors duration-200 ease-in-out',
-          currentView === rightButton.view ? 'text-blue-500' : 'text-gray-700 hover:text-blue-600'
-        ]"
-      >
+      <button @click="changeView(rightButton.view)" :class="[
+        'flex-1 text-center flex flex-col items-center justify-center p-1 group relative transition-colors duration-200 ease-in-out',
+        currentView === rightButton.view ? 'text-blue-500' : 'text-gray-700 hover:text-blue-600'
+      ]">
         <component :is="rightButton.icon" class="h-6 w-6" />
         <span
-          class="text-xs absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out pointer-events-none"
-        >
+          class="text-xs absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-700 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out pointer-events-none">
           {{ rightButton.label }}
         </span>
       </button>
@@ -263,6 +252,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
+import QrcodeVue from 'qrcode.vue'; 
+import { format } from 'date-fns'; 
 import { getAuth, signOut } from 'firebase/auth';
 import {
   getFirestore,
@@ -274,7 +265,8 @@ import {
   query,
   where,
   getDocs,
-  arrayUnion // Import arrayUnion
+  serverTimestamp,
+  arrayUnion 
 } from 'firebase/firestore';
 import { useRouter } from 'vue-router';
 import {
@@ -282,39 +274,42 @@ import {
   AcademicCapIcon,
   UserCircleIcon,
   QrCodeIcon,
-  CameraIcon as HeroCameraIcon, // Renamed to avoid conflict if CameraIcon is used elsewhere
+  CameraIcon as HeroCameraIcon,
   ArrowLeftOnRectangleIcon
 } from '@heroicons/vue/24/outline';
+
+import QrScannerView from '../components/QrScannerView.vue';
 
 const auth = getAuth();
 const db = getFirestore();
 const router = useRouter();
+const showQrModal = ref(false);
+const qrData = ref('');
+const qrClaseNombre = ref('');
 
 const role = ref<string | null>(null);
 const userName = ref('');
 const currentView = ref('');
-const showModal = ref(false); // Modal for adding/editing professor's classes
+const showModal = ref(false); 
 const saving = ref(false);
-const loading = ref(false); // Loading for professor's classes
-const error = ref(''); // Error for professor's classes
+const loading = ref(false); 
+const error = ref(''); 
 
-const clases = ref<Array<any>>([]); // Professor's classes
+const clases = ref<Array<any>>([]); 
 
 const editando = ref(false);
 const claseEnEdicionId = ref('');
 
-// Alumno specific states
-const showJoinClassModal = ref(false); // Modal for student to join class
-const joinClassCode = ref(''); // Input for class code
-const joining = ref(false); // Loading state for joining class
-const clasesAlumno = ref<Array<any>>([]); // Student's enrolled classes
-const loadingClasesAlumno = ref(false); // Loading state for student's classes
-const errorClasesAlumno = ref(''); // Error for student's classes
+const showJoinClassModal = ref(false); 
+const joinClassCode = ref(''); 
+const joining = ref(false); 
+const clasesAlumno = ref<Array<any>>([]); 
+const loadingClasesAlumno = ref(false); 
+const errorClasesAlumno = ref(''); 
 
 
 const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado'];
 
-// Generate time options for select inputs (e.g., "07:00", "07:30")
 const timeOptions = computed(() => {
   const times: string[] = [];
   for (let h = 0; h < 24; h++) {
@@ -350,7 +345,7 @@ const menuProfesor = [
 ];
 const menuAlumno = [
   { label: 'Mis Clases', view: 'MisClases', icon: AcademicCapIcon },
-  { label: 'Escanear', view: 'UnirteClase', icon: QrCodeIcon }, // Keeping this for the side menu, but using a button in the main view for joining
+  { label: 'Escanear', view: 'UnirteClase', icon: QrCodeIcon },
   { label: 'Perfil', view: 'PerfilAlumno', icon: UserCircleIcon }
 ];
 
@@ -376,28 +371,24 @@ const leftButton = computed(() => (role.value === 'profesor' ? menuProfesor[0] :
 const centerButton = computed(() =>
   role.value === 'profesor'
     ? menuProfesor[1]
-    : { label: 'Escanear', view: 'UnirteClase', icon: HeroCameraIcon } // This button could potentially open the join modal directly on mobile
+    : { label: 'Escanear', view: 'UnirteClase', icon: HeroCameraIcon }
 );
 const rightButton = computed(() => (role.value === 'profesor' ? menuProfesor[2] : menuAlumno[2]));
 
 const currentViewComponent = computed(() => {
-  // If a specific view needs custom content outside the list, define it here.
-  // For 'Clases' (profesor) and 'MisClases' (alumno), the content is directly in the template.
   if (currentView.value === 'Clases' && role.value === 'profesor') return { template: '<div></div>' };
-  if (currentView.value === 'MisClases' && role.value === 'alumno') return { template: '<div></div>' }; // Content directly in template
+  if (currentView.value === 'MisClases' && role.value === 'alumno') return { template: '<div></div>' }; 
   return componentsMap[currentView.value] || { template: '<p>Seleccione una opción</p>' };
 });
+
 
 const componentsMap = {
   Listas: { template: '<div><h2>Listas</h2><p>Contenido de listas para profesor</p></div>' },
   PerfilProfesor: { template: '<div><h2>Perfil</h2><p>Perfil del profesor</p></div>' },
-  // MisClases and UnirteClase content will be handled directly in the main template now for better integration
-  // with the join button and class list display.
-  // MisClases: { template: '<div><h2>Mis Clases</h2><p>Contenido de mis clases para alumno</p></div>' },
-  UnirteClase: { template: '<div><h2>Unirte a una clase</h2><p>Contenido para escanear/unirse a clase</p></div>' }, // This might change to directly open the modal
+  // MisClases: { template: '<div><h2>Mis Clases</h2><p>Contenido de mis clases para alumno</p></div>' }, 
+  UnirteClase: QrScannerView, 
   PerfilAlumno: { template: '<div><h2>Perfil</h2><p>Perfil del alumno</p></div>' }
 };
-
 // Professor functions
 async function cargarClases() {
   loading.value = true;
@@ -548,11 +539,9 @@ async function cargarClasesAlumno() {
     const user = auth.currentUser;
     if (!user) throw new Error('Usuario no autenticado');
 
-    // Query for classes where the student's UID is in the alumnosInscritos array
     const q = query(collection(db, 'clases'), where('alumnosInscritos', 'array-contains', user.uid));
     const querySnapshot = await getDocs(q);
 
-    // Fetch professor names for enrolled classes
     const enrolledClasses = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     const classesWithProfesorNames = await Promise.all(enrolledClasses.map(async (clase) => {
       const profesorUid = (clase as any).profesorUid;
@@ -566,6 +555,67 @@ async function cargarClasesAlumno() {
     errorClasesAlumno.value = e.message || 'Error al cargar tus clases';
   } finally {
     loadingClasesAlumno.value = false;
+  }
+}
+
+async function generarQrAsistencia(clase: any) {
+  const user = auth.currentUser;
+  if (!user) {
+    alert('Usuario no autenticado.');
+    return;
+  }
+
+  // Data que envia al QR
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const dataToEncode = JSON.stringify({
+    claseId: clase.id,
+    date: today,
+    profesorUid: user.uid // UID del profesor que genera el QR
+  });
+
+  qrData.value = dataToEncode;
+  qrClaseNombre.value = clase.nombreClase;
+  showQrModal.value = true;
+}
+
+async function marcarAsistencia(claseId: string) {
+  const user = auth.currentUser;
+  if (!user) {
+    alert('Debes iniciar sesión para marcar asistencia.');
+    return;
+  }
+
+  try {
+    // Get today's date in the format "yyyy-MM-dd"
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const attendanceDocId = `${claseId}_${today}`; // e.g., "class123_2025-06-19"
+    const attendanceRef = doc(db, 'asistencias', attendanceDocId);
+
+    // Check if the student has already marked attendance for this class today
+    const attendanceSnap = await getDoc(attendanceRef);
+
+    if (attendanceSnap.exists()) {
+      const attendanceData = attendanceSnap.data();
+      if (attendanceData.presentes && attendanceData.presentes.includes(user.uid)) {
+        alert('¡Ya has marcado tu asistencia para esta clase hoy!');
+        return;
+      }
+    }
+
+    // Update the attendance document. Use arrayUnion to add student's UID
+    // and serverTimestamp for the attendance time.
+    await updateDoc(attendanceRef, {
+      claseId: claseId,
+      fecha: today,
+      presentes: arrayUnion(user.uid),
+      // If the document is new, set creation time, otherwise update
+      ultimaAsistencia: serverTimestamp()
+    });
+
+    alert('¡Asistencia marcada con éxito!');
+  } catch (e: any) {
+    alert('Error al marcar asistencia: ' + (e.message || e));
+    console.error("Error marking attendance:", e);
   }
 }
 
@@ -624,6 +674,34 @@ function changeView(view: string) {
     cargarClases();
   } else if (view === 'MisClases' && role.value === 'alumno') {
     cargarClasesAlumno();
+  } else if (view === 'UnirteClase' && role.value === 'alumno') {
+  }
+}
+
+async function handleQrScanned(data: string) {
+  try {
+    const parsedData = JSON.parse(data);
+    const { claseId, date, profesorUid } = parsedData;
+
+    if (!claseId || !date || !profesorUid) {
+      alert('QR code inválido: faltan datos esenciales.');
+      return;
+    }
+
+    const today = format(new Date(), 'yyyy-MM-dd');
+    if (date !== today) {
+      alert('Este código QR es de otro día. Por favor, escanea el código del día de hoy.');
+      return;
+    }
+
+    // Now, call the attendance marking function
+    await marcarAsistencia(claseId);
+
+    // After successful attendance, you might want to switch back to MisClases
+    changeView('MisClases');
+  } catch (e: any) {
+    alert('Error al procesar el código QR: ' + (e.message || 'Formato incorrecto.'));
+    console.error('Error al procesar QR:', e);
   }
 }
 
@@ -656,7 +734,7 @@ onMounted(async () => {
         cargarClasesAlumno();
       }
     }
-  } catch (e:any) {
+  } catch (e: any) {
     console.error("Error al cargar datos del usuario:", e);
   }
 });

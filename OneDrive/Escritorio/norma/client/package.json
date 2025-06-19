@@ -12,11 +12,14 @@
     "@heroicons/vue": "^2.2.0",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.6",
+    "date-fns": "^4.1.0",
     "firebase": "^11.9.1",
+    "html5-qrcode": "^2.3.8",
     "leaflet": "^1.9.4",
     "qrcode.vue": "^3.6.0",
     "sweetalert2": "^11.22.0",
     "vue": "^3.5.13",
+    "vue-qrcode-reader": "^5.7.2",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
