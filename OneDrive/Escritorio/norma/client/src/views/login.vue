@@ -1,23 +1,37 @@
 <template>
-  <div class="container mt-5">
-    <div class="card p-4 shadow">
-      <h2 class="text-center">*nombre de la app*</h2>
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12">
+    <div class="w-full max-w-md bg-white p-8 rounded-lg shadow-xl">
+      <h2 class="text-4xl font-extrabold text-center mb-8 text-gray-900">ListApp</h2>
 
-      <form @submit.prevent="login" class="mt-3">
-        <div class="mb-3">
-          <input v-model="email" type="email" class="form-control" placeholder="Correo electrónico*" required />
+      <form @submit.prevent="login" class="space-y-6">
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-1">Correo electrónico*</p>
+          <input v-model="email" type="email"
+                 class="w-full p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                 placeholder="ejemplo@correo.com" required />
         </div>
-        <div class="mb-3">
-          <input v-model="password" type="password" class="form-control" placeholder="Contraseña*" required />
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-1">Contraseña*</p>
+          <input v-model="password" type="password"
+                 class="w-full p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                 placeholder="••••••••" required />
         </div>
-        <button type="submit" class="btn btn-primary w-100">Iniciar sesión</button>
+        <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out font-semibold shadow-md">
+          Iniciar sesión
+        </button>
       </form>
 
-      <hr class="my-4" />
-      <p class="text-center">o ingresa con:</p>
-      <button @click="loginWithGoogle" class="btn btn-outline-dark w-100">Google</button>
+      <hr class="my-8 border-gray-200" />
+      <p class="text-center text-gray-600 text-sm mb-4">o ingresa con:</p>
+      <button @click="loginWithGoogle"
+              class="flex items-center justify-center w-full border border-gray-300 p-3 rounded-lg hover:bg-gray-50 transition duration-300 text-gray-700 font-semibold shadow-sm">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-6 h-6 mr-3" />
+        Google
+      </button>
 
-      <p class="text-center mt-3">¿No tienes cuenta? <router-link to="/select-role">Regístrate</router-link></p>
+      <p class="text-center mt-6 text-sm text-gray-600">
+        ¿No tienes cuenta? <router-link to="/select-role" class="text-blue-600 hover:text-blue-800 font-bold ml-1">Regístrate</router-link>
+      </p>
     </div>
   </div>
 </template>

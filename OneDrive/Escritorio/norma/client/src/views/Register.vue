@@ -1,37 +1,54 @@
 <template>
-  <div class="container mt-5">
-    <div class="card p-4 shadow">
-      <h2 class="text-center">*nombre de la app*</h2>
-      <p class="text-center">Registrarse como <strong>{{ role }}</strong></p>
+  <div class="min-h-screen flex items-center justify-center bg-white px-4">
+    <div class="w-full max-w-md">
+      <button @click="router.back()" class="text-2xl mb-4">&larr;</button>
+      <h1 class="text-3xl font-bold text-center mb-6">ListApp</h1> 
 
-      <form @submit.prevent="register">
-        <div class="row mb-3">
-          <div class="col">
-            <input v-model="nombre" class="form-control" placeholder="Nombre*" required />
+      <form @submit.prevent="register" class="bg-white p-6 rounded-lg shadow-md space-y-4 mb-6"> 
+        <div class="flex gap-2">
+          <div class="w-1/2">
+            <p class="text-sm font-medium text-gray-700 mb-1">Nombre*</p>
+            <input v-model="nombre" placeholder="Nombre*" required
+                   class="w-full p-2 border rounded outline-none focus:ring focus:border-blue-500" />
           </div>
-          <div class="col">
-            <input v-model="apellido" class="form-control" placeholder="Apellido*" required />
+          <div class="w-1/2">
+            <p class="text-sm font-medium text-gray-700 mb-1">Apellido*</p>
+            <input v-model="apellido" placeholder="Apellido*" required
+                   class="w-full p-2 border rounded outline-none focus:ring focus:border-blue-500" />
           </div>
         </div>
 
-        <div class="mb-3">
-          <input v-model="correo" class="form-control" type="email" placeholder="Correo electrónico*" required />
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-1">Correo*</p>
+          <input v-model="correo" type="email" placeholder="Correo*" required
+                 class="w-full p-2 border rounded outline-none focus:ring focus:border-blue-500" />
         </div>
 
-        <div class="mb-3">
-          <input v-model="password" class="form-control" type="password" placeholder="Contraseña*" required />
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-1">Contraseña*</p>
+          <input v-model="password" type="password" placeholder="Contraseña*" required
+                 class="w-full p-2 border rounded outline-none focus:ring focus:border-blue-500" />
         </div>
 
-        <div class="mb-3">
-          <input v-model="confirmar" class="form-control" type="password" placeholder="Confirmar contraseña*" required />
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-1">Confirmar contraseña*</p>
+          <input v-model="confirmar" type="password" placeholder="Confirmar contraseña*" required
+                 class="w-full p-2 border rounded outline-none focus:ring focus:border-blue-500" />
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">Registrarse</button>
+        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">
+          Registrarse
+        </button>
       </form>
 
-      <hr />
-      <p class="text-center">o regístrate con:</p>
-      <button class="btn btn-outline-dark w-100" @click="googleRegister">Google</button>
+      <p class="text-center mt-6 text-sm text-gray-600">o regístrate con:</p>
+      <div class="flex justify-center mt-2 mb-2">
+        <button @click="googleRegister"
+                class="flex items-center border p-2 rounded hover:bg-gray-100 transition">
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5 mr-2" />
+          Google
+        </button>
+      </div>
     </div>
   </div>
 </template>
