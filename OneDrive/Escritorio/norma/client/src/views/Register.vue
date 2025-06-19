@@ -123,4 +123,30 @@ async function register() {
   }
 }
 
+async function googleRegister() {
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+
+    // Optionally, check if user doc exists and create if not
+    const userDoc = {
+      nombre: user.displayName?.split(' ')[0] || '',
+      apellido: user.displayName?.split(' ')[1] || '',
+      correo: user.email || '',
+      rol: role,
+      uid: user.uid
+    };
+
+    await setDoc(doc(db, 'usuarios', user.uid), userDoc, { merge: true });
+
+    clearSelectedRol();
+    await Swal.fire('Registro exitoso', '¡Bienvenido al sistema!', 'success');
+    router.push('/home');
+  } catch (error: any) {
+    console.error('[ERROR] Falló el registro con Google:', error);
+    Swal.fire('Error', error.message, 'error');
+  }
+}
+
 </script>

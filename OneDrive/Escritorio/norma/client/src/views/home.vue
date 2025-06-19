@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen flex flex-col md:flex-row">
-    <!-- Menú lateral -->
     <div
       class="hidden md:flex flex-col md:w-52 md:h-[90vh] md:sticky md:top-4
              p-3 border border-gray-400/20 rounded-2xl shadow-lg bg-white m-4"
@@ -53,23 +52,31 @@
       </div>
     </div>
 
-    <!-- Contenido principal -->
     <main class="flex-1 p-6 pt-6 md:ml-0 overflow-auto relative">
-      <h2 class="text-xl font-semibold mb-4">
-        Bienvenido {{ role === 'profesor' ? 'Profesor' : 'Alumno' }} {{ userName }}
-      </h2>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">
+          Bienvenido {{ role === 'profesor' ? 'Profesor' : 'Alumno' }} {{ userName }}
+        </h2>
 
-      <!-- Botón Agregar Clase (visible solo profesor en vista Clases) -->
-      <div v-if="role === 'profesor' && currentView === 'Clases'" class="fixed bottom-6 right-6 z-50">
-        <button
-          @click="showModal = true"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-lg"
-        >
-          + Agregar Clase
-        </button>
+        <div v-if="role === 'profesor' && currentView === 'Clases'">
+          <button
+            @click="showModal = true; resetFormulario()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-lg"
+          >
+            + Agregar Clase
+          </button>
+        </div>
+
+        <div v-if="role === 'alumno' && currentView === 'MisClases'">
+          <button
+            @click="showJoinClassModal = true; joinClassCode = '';"
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow-lg"
+          >
+            Unirse
+          </button>
+        </div>
       </div>
 
-      <!-- Mostrar listado de clases para profesor -->
       <div v-if="role === 'profesor' && currentView === 'Clases'">
         <div v-if="loading" class="text-gray-600">Cargando clases...</div>
         <div v-if="error" class="text-red-600">Error: {{ error }}</div>
@@ -84,74 +91,122 @@
             <ul class="list-disc list-inside">
               <li v-for="(horario, dia) in clase.horarios" :key="dia">{{ dia }}: {{ horario }}</li>
             </ul>
+            <div class="mt-4">
+              <button @click="editarClase(clase)" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm">
+                Editar
+              </button>
+            </div>
           </li>
         </ul>
         <div v-else class="text-gray-500">No tienes clases aún.</div>
       </div>
 
-      <!-- Otros componentes para otras vistas -->
+      <div v-if="role === 'alumno' && currentView === 'MisClases'">
+        <div v-if="loadingClasesAlumno" class="text-gray-600">Cargando tus clases...</div>
+        <div v-if="errorClasesAlumno" class="text-red-600">Error: {{ errorClasesAlumno }}</div>
+
+        <ul v-if="clasesAlumno.length" class="space-y-4">
+          <li v-for="clase in clasesAlumno" :key="clase.id" class="border p-4 rounded shadow">
+            <h3 class="font-semibold text-lg">{{ clase.nombreClase }} ({{ clase.codigoClase }})</h3>
+            <p>Profesor: {{ clase.nombreProfesor }}</p>
+            <p>Grado: {{ clase.grado }}, Grupo: {{ clase.grupo }}</p>
+            <p>Carrera: {{ clase.nombreCarrera }}</p>
+            <p>Horarios:</p>
+            <ul class="list-disc list-inside">
+              <li v-for="(horario, dia) in clase.horarios" :key="dia">{{ dia }}: {{ horario }}</li>
+            </ul>
+          </li>
+        </ul>
+        <div v-else class="text-gray-500">No estás inscrito en ninguna clase. ¡Usa el botón "Unirse" para empezar!</div>
+      </div>
+
       <component v-else :is="currentViewComponent" />
     </main>
 
-    <!-- Modal para agregar clase -->
-    <!-- Modal para agregar clase -->
-<div
-  v-if="showModal"
-  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
->
-  <div class="bg-white rounded-lg max-w-3xl w-full p-6 relative shadow-lg max-h-[90vh] overflow-auto">
-    <h3 class="text-2xl font-bold mb-6">Clases - agregar clase</h3>
-    <form @submit.prevent="guardarClase">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block font-medium text-sm mb-1">Nombre de la clase*</label>
-          <input v-model="form.nombreClase" required class="w-full border px-3 py-2 rounded" placeholder="Nombre de la clase" />
-        </div>
-        <div>
-          <label class="block font-medium text-sm mb-1">%mín asistencias*</label>
-          <input v-model.number="form.minAsistencias" type="number" min="0" required class="w-full border px-3 py-2 rounded" placeholder="% min asistencias" />
-        </div>
-        <div>
-          <label class="block font-medium text-sm mb-1">Grado y grupo</label>
-          <div class="flex gap-2">
-            <input v-model="form.grado" required class="w-full border px-3 py-2 rounded" placeholder="Grado" />
-            <input v-model="form.grupo" required class="w-full border px-3 py-2 rounded" placeholder="Grupo" />
+    <div
+      v-if="showModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg max-w-3xl w-full p-6 relative shadow-lg max-h-[90vh] overflow-auto">
+        <h3 class="text-2xl font-bold mb-6">{{ editando ? 'Editar Clase' : 'Clases - agregar clase' }}</h3>
+        <form @submit.prevent="guardarClase">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block font-medium text-sm mb-1">Nombre de la clase*</label>
+              <input v-model="form.nombreClase" required class="w-full border px-3 py-2 rounded" placeholder="Nombre de la clase" />
+            </div>
+            <div>
+              <label class="block font-medium text-sm mb-1">%mín asistencias*</label>
+              <input v-model.number="form.minAsistencias" type="number" min="0" required class="w-full border px-3 py-2 rounded" placeholder="% min asistencias" />
+            </div>
+            <div>
+              <label class="block font-medium text-sm mb-1">Grado y grupo</label>
+              <div class="flex gap-2">
+                <input v-model="form.grado" required class="w-full border px-3 py-2 rounded" placeholder="Grado" />
+                <input v-model="form.grupo" required class="w-full border px-3 py-2 rounded" placeholder="Grupo" />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div class="mt-4">
-        <label class="block font-medium text-sm mb-1">Nombre de la carrera</label>
-        <input v-model="form.nombreCarrera" required class="w-full border px-3 py-2 rounded" placeholder="Nombre de la carrera" />
-      </div>
-
-      <div class="mt-6">
-        <p class="text-lg font-semibold mb-2">Escoge el horario de clases:</p>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div v-for="dia in diasSemana" :key="dia">
-            <label class="block text-sm font-medium">{{ dia }}</label>
-            <input
-              v-model="form.horarios[dia]"
-              class="w-full border px-3 py-2 rounded"
-              placeholder="Horario de clase"
-            />
+          <div class="mt-4">
+            <label class="block font-medium text-sm mb-1">Nombre de la carrera</label>
+            <input v-model="form.nombreCarrera" required class="w-full border px-3 py-2 rounded" placeholder="Nombre de la carrera" />
           </div>
-        </div>
-      </div>
 
-      <div class="mt-6 flex justify-end gap-3">
-        <button type="button" @click="showModal = false" class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">
-          Cancelar
-        </button>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded" :disabled="saving">
-          {{ saving ? 'Guardando...' : 'Guardar' }}
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
+          <div class="mt-6">
+            <p class="text-lg font-semibold mb-2">Escoge el horario de clases:</p>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div v-for="dia in diasSemana" :key="dia">
+                <label class="block text-sm font-medium">{{ dia }}</label>
+                <div class="flex gap-2">
+                  <select v-model="form.horarios[dia].start" class="w-1/2 border px-2 py-2 rounded">
+                    <option value="">No hay clase</option>
+                    <option v-for="time in timeOptions" :key="time" :value="time">{{ time }}</option>
+                  </select>
+                  <select v-model="form.horarios[dia].end" class="w-1/2 border px-2 py-2 rounded">
+                    <option value="">No hay clase</option>
+                    <option v-for="time in timeOptions" :key="time" :value="time">{{ time }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
 
-    <!-- Menú móvil -->
+          <div class="mt-6 flex justify-end gap-3">
+            <button type="button" @click="showModal = false" class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">
+              Cancelar
+            </button>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded" :disabled="saving">
+              {{ saving ? 'Guardando...' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div
+      v-if="showJoinClassModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg max-w-md w-full p-6 relative shadow-lg">
+        <h3 class="text-2xl font-bold mb-4">Unirse a una clase</h3>
+        <form @submit.prevent="unirseAClase">
+          <div class="mb-4">
+            <label class="block font-medium text-sm mb-1">Código de la clase</label>
+            <input v-model="joinClassCode" type="text" required class="w-full border px-3 py-2 rounded text-center text-lg font-mono tracking-widest uppercase" placeholder="EJ: ABC123" maxlength="6" />
+          </div>
+          <div class="flex justify-end gap-3">
+            <button type="button" @click="showJoinClassModal = false" class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">
+              Cancelar
+            </button>
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded" :disabled="joining">
+              {{ joining ? 'Uniéndose...' : 'Unirse' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <nav
       v-if="role"
       class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 flex justify-around items-center px-4 py-2 md:hidden z-10"
@@ -218,7 +273,8 @@ import {
   updateDoc,
   query,
   where,
-  getDocs
+  getDocs,
+  arrayUnion // Import arrayUnion
 } from 'firebase/firestore';
 import { useRouter } from 'vue-router';
 import {
@@ -226,7 +282,7 @@ import {
   AcademicCapIcon,
   UserCircleIcon,
   QrCodeIcon,
-  CameraIcon as HeroCameraIcon,
+  CameraIcon as HeroCameraIcon, // Renamed to avoid conflict if CameraIcon is used elsewhere
   ArrowLeftOnRectangleIcon
 } from '@heroicons/vue/24/outline';
 
@@ -237,15 +293,39 @@ const router = useRouter();
 const role = ref<string | null>(null);
 const userName = ref('');
 const currentView = ref('');
-const showModal = ref(false);
+const showModal = ref(false); // Modal for adding/editing professor's classes
 const saving = ref(false);
-const loading = ref(false);
-const error = ref('');
-const clases = ref<Array<any>>([]);
+const loading = ref(false); // Loading for professor's classes
+const error = ref(''); // Error for professor's classes
+
+const clases = ref<Array<any>>([]); // Professor's classes
+
 const editando = ref(false);
 const claseEnEdicionId = ref('');
 
+// Alumno specific states
+const showJoinClassModal = ref(false); // Modal for student to join class
+const joinClassCode = ref(''); // Input for class code
+const joining = ref(false); // Loading state for joining class
+const clasesAlumno = ref<Array<any>>([]); // Student's enrolled classes
+const loadingClasesAlumno = ref(false); // Loading state for student's classes
+const errorClasesAlumno = ref(''); // Error for student's classes
+
+
 const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado'];
+
+// Generate time options for select inputs (e.g., "07:00", "07:30")
+const timeOptions = computed(() => {
+  const times: string[] = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      const hour = h.toString().padStart(2, '0');
+      const minute = m.toString().padStart(2, '0');
+      times.push(`${hour}:${minute}`);
+    }
+  }
+  return times;
+});
 
 const form = reactive({
   nombreClase: '',
@@ -254,12 +334,12 @@ const form = reactive({
   grupo: '',
   nombreCarrera: '',
   horarios: {
-    Lunes: '',
-    Martes: '',
-    Miércoles: '',
-    Jueves: '',
-    Viernes: '',
-    Sabado: ''
+    Lunes: { start: '', end: '' },
+    Martes: { start: '', end: '' },
+    Miércoles: { start: '', end: '' },
+    Jueves: { start: '', end: '' },
+    Viernes: { start: '', end: '' },
+    Sabado: { start: '', end: '' }
   }
 });
 
@@ -270,7 +350,7 @@ const menuProfesor = [
 ];
 const menuAlumno = [
   { label: 'Mis Clases', view: 'MisClases', icon: AcademicCapIcon },
-  { label: 'Unirte a una clase', view: 'UnirteClase', icon: QrCodeIcon },
+  { label: 'Escanear', view: 'UnirteClase', icon: QrCodeIcon }, // Keeping this for the side menu, but using a button in the main view for joining
   { label: 'Perfil', view: 'PerfilAlumno', icon: UserCircleIcon }
 ];
 
@@ -296,23 +376,29 @@ const leftButton = computed(() => (role.value === 'profesor' ? menuProfesor[0] :
 const centerButton = computed(() =>
   role.value === 'profesor'
     ? menuProfesor[1]
-    : { label: 'Escanear', view: 'UnirteClase', icon: HeroCameraIcon }
+    : { label: 'Escanear', view: 'UnirteClase', icon: HeroCameraIcon } // This button could potentially open the join modal directly on mobile
 );
 const rightButton = computed(() => (role.value === 'profesor' ? menuProfesor[2] : menuAlumno[2]));
 
 const currentViewComponent = computed(() => {
+  // If a specific view needs custom content outside the list, define it here.
+  // For 'Clases' (profesor) and 'MisClases' (alumno), the content is directly in the template.
   if (currentView.value === 'Clases' && role.value === 'profesor') return { template: '<div></div>' };
+  if (currentView.value === 'MisClases' && role.value === 'alumno') return { template: '<div></div>' }; // Content directly in template
   return componentsMap[currentView.value] || { template: '<p>Seleccione una opción</p>' };
 });
 
 const componentsMap = {
   Listas: { template: '<div><h2>Listas</h2><p>Contenido de listas para profesor</p></div>' },
   PerfilProfesor: { template: '<div><h2>Perfil</h2><p>Perfil del profesor</p></div>' },
-  MisClases: { template: '<div><h2>Mis Clases</h2><p>Contenido de mis clases para alumno</p></div>' },
-  UnirteClase: { template: '<div><h2>Unirte a una clase</h2><p>Formulario para unirse a una clase</p></div>' },
+  // MisClases and UnirteClase content will be handled directly in the main template now for better integration
+  // with the join button and class list display.
+  // MisClases: { template: '<div><h2>Mis Clases</h2><p>Contenido de mis clases para alumno</p></div>' },
+  UnirteClase: { template: '<div><h2>Unirte a una clase</h2><p>Contenido para escanear/unirse a clase</p></div>' }, // This might change to directly open the modal
   PerfilAlumno: { template: '<div><h2>Perfil</h2><p>Perfil del alumno</p></div>' }
 };
 
+// Professor functions
 async function cargarClases() {
   loading.value = true;
   error.value = '';
@@ -345,14 +431,28 @@ async function guardarClase() {
     const user = auth.currentUser;
     if (!user) throw new Error('Usuario no autenticado');
 
-    const horariosValidos = Object.entries(form.horarios)
-      .filter(([_, hora]) => hora.trim() !== '')
-      .reduce((acc, [dia, hora]) => {
-      acc[dia] = hora;
-      return acc;
-      }, {});
-    if (Object.keys(horariosValidos).length === 0) {
-      alert('Debes ingresar al menos un horario.');
+    const horariosParaGuardar: { [key: string]: string } = {};
+    let hasValidHorario = false;
+
+    for (const dia of diasSemana) {
+      const { start, end } = form.horarios[dia];
+      if (start && end) {
+        if (start >= end) {
+          alert(`La hora de inicio para ${dia} debe ser anterior a la hora de fin.`);
+          saving.value = false;
+          return;
+        }
+        horariosParaGuardar[dia] = `${start}-${end}`;
+        hasValidHorario = true;
+      } else if (start || end) {
+        alert(`Por favor, selecciona tanto la hora de inicio como la de fin para ${dia}, o deja ambas como "No hay clase".`);
+        saving.value = false;
+        return;
+      }
+    }
+
+    if (!hasValidHorario) {
+      alert('Debes ingresar al menos un horario válido (hora de inicio y fin).');
       saving.value = false;
       return;
     }
@@ -365,7 +465,7 @@ async function guardarClase() {
         grado: form.grado,
         grupo: form.grupo,
         nombreCarrera: form.nombreCarrera,
-        horarios: horariosValidos
+        horarios: horariosParaGuardar
       });
       alert('Clase actualizada correctamente.');
     } else {
@@ -385,9 +485,10 @@ async function guardarClase() {
         grado: form.grado,
         grupo: form.grupo,
         nombreCarrera: form.nombreCarrera,
-        horarios: horariosValidos,
+        horarios: horariosParaGuardar,
         profesorUid: user.uid,
-        creadoEn: new Date()
+        creadoEn: new Date(),
+        alumnosInscritos: [] // Initialize with empty array for enrolled students
       };
 
       await addDoc(collection(db, 'clases'), nuevaClase);
@@ -411,7 +512,9 @@ function resetFormulario() {
   form.grado = '';
   form.grupo = '';
   form.nombreCarrera = '';
-  diasSemana.forEach(d => (form.horarios[d] = ''));
+  diasSemana.forEach(d => {
+    form.horarios[d] = { start: '', end: '' };
+  });
   editando.value = false;
   claseEnEdicionId.value = '';
 }
@@ -422,16 +525,105 @@ function editarClase(clase: any) {
   form.grado = clase.grado;
   form.grupo = clase.grupo;
   form.nombreCarrera = clase.nombreCarrera;
-  diasSemana.forEach(d => (form.horarios[d] = clase.horarios?.[d] || ''));
+  diasSemana.forEach(d => {
+    const horarioStr = clase.horarios?.[d] || '';
+    if (horarioStr) {
+      const [start, end] = horarioStr.split('-');
+      form.horarios[d] = { start: start || '', end: end || '' };
+    } else {
+      form.horarios[d] = { start: '', end: '' };
+    }
+  });
   claseEnEdicionId.value = clase.id;
   editando.value = true;
   showModal.value = true;
+}
+
+// Student functions
+async function cargarClasesAlumno() {
+  loadingClasesAlumno.value = true;
+  errorClasesAlumno.value = '';
+  clasesAlumno.value = [];
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Usuario no autenticado');
+
+    // Query for classes where the student's UID is in the alumnosInscritos array
+    const q = query(collection(db, 'clases'), where('alumnosInscritos', 'array-contains', user.uid));
+    const querySnapshot = await getDocs(q);
+
+    // Fetch professor names for enrolled classes
+    const enrolledClasses = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const classesWithProfesorNames = await Promise.all(enrolledClasses.map(async (clase) => {
+      const profesorUid = (clase as any).profesorUid;
+      const profesorDoc = await getDoc(doc(db, 'usuarios', profesorUid));
+      const nombreProfesor = profesorDoc.exists() ? profesorDoc.data()?.nombre || 'Desconocido' : 'Desconocido';
+      return { ...clase, nombreProfesor };
+    }));
+    clasesAlumno.value = classesWithProfesorNames;
+
+  } catch (e: any) {
+    errorClasesAlumno.value = e.message || 'Error al cargar tus clases';
+  } finally {
+    loadingClasesAlumno.value = false;
+  }
+}
+
+async function unirseAClase() {
+  joining.value = true;
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Usuario no autenticado');
+    if (!joinClassCode.value) {
+      alert('Por favor, ingresa un código de clase.');
+      return;
+    }
+
+    const classCode = joinClassCode.value.toUpperCase().trim();
+
+    // Query for the class by its code
+    const q = query(collection(db, 'clases'), where('codigoClase', '==', classCode));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      alert('Clase no encontrada. Verifica el código e inténtalo de nuevo.');
+      return;
+    }
+
+    const classDoc = querySnapshot.docs[0];
+    const claseData = classDoc.data();
+    const claseRef = doc(db, 'clases', classDoc.id);
+
+    // Check if the student is already enrolled
+    if (claseData.alumnosInscritos && claseData.alumnosInscritos.includes(user.uid)) {
+      alert('Ya estás inscrito en esta clase.');
+      showJoinClassModal.value = false;
+      joinClassCode.value = '';
+      return;
+    }
+
+    // Add student's UID to the alumnosInscritos array
+    await updateDoc(claseRef, {
+      alumnosInscritos: arrayUnion(user.uid)
+    });
+
+    alert('¡Te has unido a la clase exitosamente!');
+    showJoinClassModal.value = false;
+    joinClassCode.value = '';
+    cargarClasesAlumno(); // Refresh the student's class list
+  } catch (e: any) {
+    alert('Error al unirte a la clase: ' + (e.message || e));
+  } finally {
+    joining.value = false;
+  }
 }
 
 function changeView(view: string) {
   currentView.value = view;
   if (view === 'Clases' && role.value === 'profesor') {
     cargarClases();
+  } else if (view === 'MisClases' && role.value === 'alumno') {
+    cargarClasesAlumno();
   }
 }
 
@@ -457,11 +649,15 @@ onMounted(async () => {
       const data = docSnap.data();
       role.value = data.rol || null;
       userName.value = data.nombre || '';
-      currentView.value = role.value === 'profesor' ? 'Listas' : 'MisClases';
+      currentView.value = role.value === 'profesor' ? 'Listas' : 'MisClases'; // Default view for alumno is MisClases
       if (currentView.value === 'Clases' && role.value === 'profesor') {
         cargarClases();
+      } else if (currentView.value === 'MisClases' && role.value === 'alumno') {
+        cargarClasesAlumno();
       }
     }
-  } catch {}
+  } catch (e:any) {
+    console.error("Error al cargar datos del usuario:", e);
+  }
 });
 </script>
