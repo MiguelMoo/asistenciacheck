@@ -1,19 +1,18 @@
 <template>
   <div class="min-h-screen flex flex-col md:flex-row">
-    <div class="hidden md:flex flex-col md:w-52 md:h-[90vh] md:sticky md:top-4
-             p-3 border border-gray-400/20 rounded-2xl shadow-lg bg-white m-4">
+    <div class="hidden md:flex flex-col md:w-52 md:h-[90vh] md:sticky md:top-4 p-3 border border-gray-400/20 rounded-2xl shadow-lg bg-white m-4">
       <nav class="flex-1 flex flex-col p-2">
         <ul class="flex-1">
           <li v-for="item in menuItems" :key="item.label" class="mb-2 group">
             <button @click="changeView(item.view)" :class="[
               'w-full px-2 py-2 rounded flex items-center justify-start gap-2 relative transition-colors duration-200 ease-in-out',
-              currentView === item.view ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-blue-600'
+              currentView === item.view ? 'bg-blue-500 text-white' : 'text-gray hover:bg-gray-200 hover:text-blue-600'
             ]">
               <component :is="item.icon" class="h-5 w-5 flex-shrink-0" />
               <span :class="[
-                'whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out',
-                'md:absolute md:left-8 md:opacity-0 md:w-0',
-                'group-hover:md:opacity-100 group-hover:md:w-auto'
+                'whitespace-nowrap  transition-all duration-300 ease-in-out',
+                'md:absolute md:left-8 md:opacity-100 md:w-0',
+                'group-hover:md:opacity-100 group-hover:md:w-auto',
               ]" class="md:inline">
                 {{ item.label }}
               </span>
@@ -252,8 +251,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
-import QrcodeVue from 'qrcode.vue'; 
-import { format } from 'date-fns'; 
+import QrcodeVue from 'qrcode.vue';
+import { format } from 'date-fns';
 import { getAuth, signOut } from 'firebase/auth';
 import {
   getFirestore,
@@ -266,7 +265,7 @@ import {
   where,
   getDocs,
   serverTimestamp,
-  arrayUnion 
+  arrayUnion
 } from 'firebase/firestore';
 import { useRouter } from 'vue-router';
 import {
@@ -290,22 +289,22 @@ const qrClaseNombre = ref('');
 const role = ref<string | null>(null);
 const userName = ref('');
 const currentView = ref('');
-const showModal = ref(false); 
+const showModal = ref(false);
 const saving = ref(false);
-const loading = ref(false); 
-const error = ref(''); 
+const loading = ref(false);
+const error = ref('');
 
-const clases = ref<Array<any>>([]); 
+const clases = ref<Array<any>>([]);
 
 const editando = ref(false);
 const claseEnEdicionId = ref('');
 
-const showJoinClassModal = ref(false); 
-const joinClassCode = ref(''); 
-const joining = ref(false); 
-const clasesAlumno = ref<Array<any>>([]); 
-const loadingClasesAlumno = ref(false); 
-const errorClasesAlumno = ref(''); 
+const showJoinClassModal = ref(false);
+const joinClassCode = ref('');
+const joining = ref(false);
+const clasesAlumno = ref<Array<any>>([]);
+const loadingClasesAlumno = ref(false);
+const errorClasesAlumno = ref('');
 
 
 const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado'];
@@ -377,7 +376,7 @@ const rightButton = computed(() => (role.value === 'profesor' ? menuProfesor[2] 
 
 const currentViewComponent = computed(() => {
   if (currentView.value === 'Clases' && role.value === 'profesor') return { template: '<div></div>' };
-  if (currentView.value === 'MisClases' && role.value === 'alumno') return { template: '<div></div>' }; 
+  if (currentView.value === 'MisClases' && role.value === 'alumno') return { template: '<div></div>' };
   return componentsMap[currentView.value] || { template: '<p>Seleccione una opción</p>' };
 });
 
@@ -386,7 +385,7 @@ const componentsMap = {
   Listas: { template: '<div><h2>Listas</h2><p>Contenido de listas para profesor</p></div>' },
   PerfilProfesor: { template: '<div><h2>Perfil</h2><p>Perfil del profesor</p></div>' },
   // MisClases: { template: '<div><h2>Mis Clases</h2><p>Contenido de mis clases para alumno</p></div>' }, 
-  UnirteClase: QrScannerView, 
+  UnirteClase: QrScannerView,
   PerfilAlumno: { template: '<div><h2>Perfil</h2><p>Perfil del alumno</p></div>' }
 };
 // Professor functions
