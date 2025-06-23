@@ -19,15 +19,34 @@
         <h2 class="text-2xl font-semibold text-blue-800 mb-4">Código Temporal de Asistencia</h2>
         <div class="flex flex-col items-center justify-center space-y-4 mb-4">
           <p v-if="generatingCode" class="text-lg text-gray-600">Generando código...</p>
-          <p v-else-if="currentAttendanceCode" class="text-4xl font-extrabold text-blue-600 tracking-wide">
-            {{ currentAttendanceCode }}
-          </p>
+          <div v-else-if="currentAttendanceCode" class="text-center">
+            <p v-if="showCode" class="text-4xl font-extrabold text-blue-600 tracking-wide mb-2">
+              {{ currentAttendanceCode }}
+            </p>
+            <p v-else class="text-4xl font-extrabold text-gray-400 tracking-wide mb-2 cursor-pointer" @click="showCode = true">
+              ****
+            </p>
+            <button
+              v-if="!showCode"
+              @click="showCode = true"
+              class="text-blue-500 hover:text-blue-700 text-sm focus:outline-none"
+            >
+              Mostrar Código
+            </button>
+            <button
+              v-else
+              @click="showCode = false"
+              class="text-blue-500 hover:text-blue-700 text-sm focus:outline-none"
+            >
+              Ocultar Código
+            </button>
+          </div>
           <p v-else class="text-lg text-red-600">No hay código activo.</p>
 
           <div v-if="currentAttendanceCode" class="mt-4 p-2 bg-white rounded-lg shadow">
             <qrcode-vue :value="currentAttendanceCode" :size="200" level="H" />
           </div>
-          </div>
+        </div>
 
         <div class="flex justify-center gap-4">
           <button
@@ -130,16 +149,14 @@
 import { ref, defineProps, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, setDoc, Timestamp } from 'firebase/firestore';
-import QrcodeVue from 'qrcode.vue'; // Importar el componente qrcode.vue
+import QrcodeVue from 'qrcode.vue';
 
-// Define la interfaz para un alumno con su estado de asistencia
 interface Student {
   id: string;
   nombre: string;
-  attendanceStatus: string | null; // 'Presente', 'Ausente', 'Tardanza', o null si no se ha marcado
+  attendanceStatus: string | null;
 }
 
-// Props que vienen de la ruta
 const props = defineProps<{
   classId: string;
   date: string;
@@ -148,31 +165,25 @@ const props = defineProps<{
 const router = useRouter();
 const db = getFirestore();
 
-// Estados para la información de la clase y fecha
 const className = ref<string | null>(null);
 const loadingClassName = ref(true);
 const formattedDate = computed(() => {
-  // Convierte la cadena de fecha a un formato más legible
-  const dateObj = new Date(props.date);
-  if (isNaN(dateObj.getTime())) { // Verifica si la fecha es inválida
+  const dateObj = new Date(props.date + 'T00:00:00'); // Ensure UTC parsing for consistency
+  if (isNaN(dateObj.getTime())) {
     return 'Fecha inválida';
   }
   return dateObj.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 });
 
-// Estados para la gestión de alumnos y asistencia
 const students = ref<Student[]>([]);
 const loadingStudents = ref(true);
 
-// Estados para el código de asistencia temporal
 const currentAttendanceCode = ref<string | null>(null);
 const generatingCode = ref(false);
 const copyMessage = ref<string | null>(null);
 let codeTimeout: ReturnType<typeof setTimeout> | null = null;
+const showCode = ref(false); // Nuevo estado para controlar la visibilidad del código
 
-// --- Funciones de carga de datos ---
-
-// Cargar el nombre de la clase
 const fetchClassName = async () => {
   loadingClassName.value = true;
   try {
@@ -181,7 +192,6 @@ const fetchClassName = async () => {
     if (docSnap.exists()) {
       className.value = docSnap.data().nombreClase;
     } else {
-      console.warn('No se encontró el documento de la clase con ID:', props.classId);
       className.value = null;
     }
   } catch (error) {
@@ -192,30 +202,25 @@ const fetchClassName = async () => {
   }
 };
 
-// Cargar alumnos inscritos en la clase y su asistencia para la fecha
 const fetchStudentsAndAttendance = async () => {
   loadingStudents.value = true;
   students.value = []; 
 
   try {
-    // 1. Obtener los IDs de los alumnos inscritos en esta clase
     const classStudentsQuery = query(
       collection(db, 'clases', props.classId, 'alumnosInscritos')
     );
     const classStudentsSnapshot = await getDocs(classStudentsQuery);
-    const studentIds: string[] = classStudentsSnapshot.docs.map(doc => doc.id); // Los IDs de los documentos son los UIDs de los alumnos
+    const studentIds: string[] = classStudentsSnapshot.docs.map(doc => doc.id); 
 
     if (studentIds.length === 0) {
       loadingStudents.value = false;
       return;
     }
 
-    // 2. Obtener los detalles de esos alumnos de la colección 'usuarios'
-    // Nota: La consulta `where('__name__', 'in', studentIds)` tiene un límite de 10 elementos para `studentIds`.
-    // Si esperas tener más de 10 alumnos inscritos en una clase, necesitarás dividir esta consulta.
     const usersQuery = query(
       collection(db, 'usuarios'),
-      where('__name__', 'in', studentIds) // Busca documentos por su UID
+      where('__name__', 'in', studentIds) 
     );
     const usersSnapshot = await getDocs(usersQuery);
 
@@ -225,13 +230,11 @@ const fetchStudentsAndAttendance = async () => {
       attendanceStatus: null 
     }));
 
-    // 3. Cargar la asistencia ya registrada para esta fecha y esta clase
     const attendanceDocRef = doc(db, 'asistencias', props.classId, 'dias', props.date);
     const attendanceDocSnap = await getDoc(attendanceDocRef);
 
     if (attendanceDocSnap.exists()) {
       const dailyAttendanceData = attendanceDocSnap.data();
-      // Mapear los estados de asistencia a los alumnos cargados
       fetchedStudents.forEach(student => {
         if (dailyAttendanceData[student.id]) {
           student.attendanceStatus = dailyAttendanceData[student.id].status || null;
@@ -248,9 +251,6 @@ const fetchStudentsAndAttendance = async () => {
   }
 };
 
-// --- Funciones de acción ---
-
-// Generar un código de asistencia aleatorio
 const generateRandomCode = () => {
   return Math.floor(1000 + Math.random() * 9000).toString();
 };
@@ -258,8 +258,8 @@ const generateRandomCode = () => {
 const generateNewCode = async () => {
   generatingCode.value = true;
   copyMessage.value = null;
+  showCode.value = false; // Resetear la visibilidad al generar nuevo código
 
-  // Limpiar cualquier timeout existente para el código anterior
   if (codeTimeout) {
     clearTimeout(codeTimeout);
   }
@@ -267,20 +267,18 @@ const generateNewCode = async () => {
   const newCode = generateRandomCode();
   currentAttendanceCode.value = newCode;
 
-  // Guardar el código en Firebase para esta clase y fecha
   try {
     const codeDocRef = doc(db, 'codigos_asistencia', props.classId, 'fechas', props.date);
     await setDoc(codeDocRef, {
       code: newCode,
       generatedAt: Timestamp.now(),
-      expiresAt: Timestamp.fromMillis(Date.now() + 5 * 60 * 1000), // Válido por 5 minutos
+      expiresAt: Timestamp.fromMillis(Date.now() + 5 * 60 * 1000), 
     });
-    console.log(`Código ${newCode} generado y guardado para ${props.classId} en ${props.date}`);
-
+    
     codeTimeout = setTimeout(() => {
       currentAttendanceCode.value = null;
-      console.log('Código temporal expirado y limpiado.');
-    }, 5 * 60 * 1000); // 5 minutos pa borrar
+      showCode.value = false; // Ocultar también al expirar
+    }, 5 * 60 * 1000); 
   } catch (error) {
     console.error('Error al guardar el código de asistencia:', error);
     currentAttendanceCode.value = null;
@@ -303,8 +301,6 @@ const copyCodeToClipboard = async () => {
   }
 };
 
-
-// Guardar la asistencia diaria de los alumnos
 const saveDailyAttendance = async () => {
   try {
     const attendanceDocRef = doc(db, 'asistencias', props.classId, 'dias', props.date);
@@ -314,12 +310,12 @@ const saveDailyAttendance = async () => {
       if (student.attendanceStatus) {
         attendanceData[student.id] = {
           status: student.attendanceStatus,
-          timestamp: Timestamp.now() // O la hora real de la asistencia si la registras
+          timestamp: Timestamp.now() 
         };
       }
     });
 
-    await setDoc(attendanceDocRef, attendanceData, { merge: true }); // Usar merge para actualizar o crear
+    await setDoc(attendanceDocRef, attendanceData, { merge: true });
 
     alert('Asistencia guardada con éxito.');
   } catch (error) {
@@ -332,7 +328,6 @@ const goBack = () => {
   router.back();
 };
 
-// Cargar datos al montar el componente
 onMounted(() => {
   fetchClassName();
   fetchStudentsAndAttendance();
@@ -341,5 +336,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Any specific scoped styles for DailyAttendancePage can go here */
 </style>
