@@ -5,7 +5,7 @@ export interface HorarioDia {
 }
 
 export interface Horarios {
-  [key: string]: HorarioDia;
+  [key: string]: string; // ejemplo: "Lunes": "11:00-12:00"
 }
 
 export interface Clase {
@@ -18,11 +18,11 @@ export interface Clase {
   nombreCarrera: string;
   horarios: Horarios;
   profesorUid: string;
-  
   creadoEn: Date;
   alumnosInscritos: string[];
   nombreProfesor?: string; 
 }
+
 
 export interface MenuItem {
   label: string;
