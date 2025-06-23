@@ -186,6 +186,7 @@
       v-if="showMarkAttendanceModal"
       :class-id="selectedClassForAttendance.id"
       :class-code="selectedClassForAttendance.code"
+      :attendance-date="new Date().toISOString().slice(0, 10)"
       @close="showMarkAttendanceModal = false"
       @attendance-marked="handleAttendanceMarked"
     />

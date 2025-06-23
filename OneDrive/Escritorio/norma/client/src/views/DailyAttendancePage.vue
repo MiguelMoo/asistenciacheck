@@ -17,13 +17,17 @@
 
       <div class="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
         <h2 class="text-2xl font-semibold text-blue-800 mb-4">Código Temporal de Asistencia</h2>
-        <div class="flex items-center justify-center space-x-4 mb-4">
+        <div class="flex flex-col items-center justify-center space-y-4 mb-4">
           <p v-if="generatingCode" class="text-lg text-gray-600">Generando código...</p>
           <p v-else-if="currentAttendanceCode" class="text-4xl font-extrabold text-blue-600 tracking-wide">
             {{ currentAttendanceCode }}
           </p>
           <p v-else class="text-lg text-red-600">No hay código activo.</p>
-        </div>
+
+          <div v-if="currentAttendanceCode" class="mt-4 p-2 bg-white rounded-lg shadow">
+            <qrcode-vue :value="currentAttendanceCode" :size="200" level="H" />
+          </div>
+          </div>
 
         <div class="flex justify-center gap-4">
           <button
@@ -126,6 +130,7 @@
 import { ref, defineProps, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, setDoc, Timestamp } from 'firebase/firestore';
+import QrcodeVue from 'qrcode.vue'; // Importar el componente qrcode.vue
 
 // Define la interfaz para un alumno con su estado de asistencia
 interface Student {
@@ -206,6 +211,8 @@ const fetchStudentsAndAttendance = async () => {
     }
 
     // 2. Obtener los detalles de esos alumnos de la colección 'usuarios'
+    // Nota: La consulta `where('__name__', 'in', studentIds)` tiene un límite de 10 elementos para `studentIds`.
+    // Si esperas tener más de 10 alumnos inscritos en una clase, necesitarás dividir esta consulta.
     const usersQuery = query(
       collection(db, 'usuarios'),
       where('__name__', 'in', studentIds) // Busca documentos por su UID
@@ -329,10 +336,10 @@ const goBack = () => {
 onMounted(() => {
   fetchClassName();
   fetchStudentsAndAttendance();
-
 });
 
 </script>
 
 <style scoped>
+/* Any specific scoped styles for DailyAttendancePage can go here */
 </style>
