@@ -1,4 +1,4 @@
-// composables/useClasses.ts
+
 import { ref, reactive } from 'vue';
 import {
   getFirestore,
@@ -11,7 +11,7 @@ import {
   doc,
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import type { Clase, Horarios } from '../types/types'; // Ajusta la ruta a tu archivo types.ts
+import type { Clase, Horarios } from '../types/types'; 
 
 export function useClasses() {
   const db = getFirestore();
@@ -179,10 +179,10 @@ export function useClasses() {
 
       resetFormulario();
       await cargarClases();
-      return true; // Indicate success
+      return true;
     } catch (e: any) {
       alert('Error guardando clase: ' + (e.message || e));
-      return false; // Indicate failure
+      return false;
     } finally {
       saving.value = false;
     }

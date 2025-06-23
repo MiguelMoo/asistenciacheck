@@ -1,4 +1,3 @@
-// types.ts
 export interface HorarioDia {
   split(arg0: string): [any, any];
   start: string;
@@ -19,13 +18,14 @@ export interface Clase {
   nombreCarrera: string;
   horarios: Horarios;
   profesorUid: string;
+  
   creadoEn: Date;
   alumnosInscritos: string[];
-  nombreProfesor?: string; // Solo para la vista del alumno
+  nombreProfesor?: string; 
 }
 
 export interface MenuItem {
   label: string;
   view: string;
-  icon: any; // Considera un tipo más específico si usas componentes de icono
+  icon: any; 
 }

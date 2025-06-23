@@ -117,10 +117,6 @@ const emit = defineEmits(['close', 'saved']);
 
 const { form, saving, diasSemana, guardarClase, resetFormulario } = useClasses();
 
-// Initialize form from props if in editing mode
-// This part might need adjustment depending on how you pass the class data for editing.
-// For simplicity, I'm assuming 'form' is already populated by 'editarClase' in the parent.
-
 const timeOptions = computed(() => {
   const times: string[] = [];
   for (let h = 0; h < 24; h++) {

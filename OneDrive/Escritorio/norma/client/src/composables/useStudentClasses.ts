@@ -1,18 +1,7 @@
-// composables/useStudentClasses.ts
-import { ref } from 'vue';
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  getDoc,
-  updateDoc,
-  arrayUnion,
-} from 'firebase/firestore';
+import { ref, watch } from 'vue';
+import { getFirestore, collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import type { Clase } from '../types/types'; // Ajusta la ruta a tu archivo types.ts
+import type { Clase } from '../types/types';
 
 export function useStudentClasses() {
   const db = getFirestore();
@@ -21,89 +10,76 @@ export function useStudentClasses() {
   const clasesAlumno = ref<Clase[]>([]);
   const loadingClasesAlumno = ref(false);
   const errorClasesAlumno = ref<string | null>(null);
-  const showJoinClassModal = ref(false);
-  const joinClassCode = ref('');
-  const joining = ref(false);
+  const showJoinClassModal = ref(false); // Mantener este estado aquí, ya que es parte de la gestión de clases del alumno :p
 
   const cargarClasesAlumno = async () => {
     loadingClasesAlumno.value = true;
     errorClasesAlumno.value = null;
-    clasesAlumno.value = [];
+    clasesAlumno.value = []; 
+
+    const user = auth.currentUser;
+    if (!user) {
+      errorClasesAlumno.value = 'Usuario no autenticado.';
+      loadingClasesAlumno.value = false;
+      return;
+    }
+
     try {
-      const user = auth.currentUser;
-      if (!user) throw new Error('Usuario no autenticado.');
+      const clasesRef = collection(db, 'clases');
+      const clasesSnapshot = await getDocs(clasesRef);
+      const enrolledClassIds: Set<string> = new Set(); 
 
-      const q = query(collection(db, 'clases'), where('alumnosInscritos', 'array-contains', user.uid));
-      const querySnapshot = await getDocs(q);
+      for (const claseDoc of clasesSnapshot.docs) {
+        const classId = claseDoc.id;
+        const alumnosInscritosRef = collection(db, 'clases', classId, 'alumnosInscritos');
+        const alumnoDocRef = doc(alumnosInscritosRef, user.uid);
 
-      const enrolledClasses = querySnapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      })) as Clase[];
+        const alumnoDocSnap = await getDoc(alumnoDocRef);
+        if (alumnoDocSnap.exists()) {
+          enrolledClassIds.add(classId);
+        }
+      }
+      const fetchedClasses: Clase[] = [];
+      for (const classId of Array.from(enrolledClassIds)) {
+        const classDocRef = doc(db, 'clases', classId);
+        const classDocSnap = await getDoc(classDocRef);
 
-      const classesWithProfesorNames = await Promise.all(
-        enrolledClasses.map(async (clase) => {
-          const profesorUid = clase.profesorUid;
-          const profesorDoc = await getDoc(doc(db, 'usuarios', profesorUid));
-          const nombreProfesor = profesorDoc.exists()
-            ? profesorDoc.data()?.nombre || 'Desconocido'
-            : 'Desconocido';
-          return { ...clase, nombreProfesor };
-        })
-      );
-      clasesAlumno.value = classesWithProfesorNames;
+        if (classDocSnap.exists()) {
+          const classData = classDocSnap.data();
+
+          let nombreProfesor = 'Profesor Desconocido';
+          if (classData.profesorId) {
+            const profesorDocRef = doc(db, 'usuarios', classData.profesorId);
+            const profesorDocSnap = await getDoc(profesorDocRef);
+            if (profesorDocSnap.exists()) {
+              nombreProfesor = profesorDocSnap.data().nombre || nombreProfesor;
+            }
+          }
+
+          fetchedClasses.push({
+              id: classDocSnap.id,
+              nombreClase: classData.nombreClase,
+              codigoClase: classData.codigoClase,
+              profesorUid: classData.profesorId,
+              nombreProfesor: nombreProfesor,
+              grado: classData.grado,
+              grupo: classData.grupo,
+              nombreCarrera: classData.nombreCarrera || 'Carrera Desconocida',
+              horarios: classData.horarios || {},
+              minAsistencias: 0,
+              creadoEn: classData.creadoEn ? new Date(classData.creadoEn.seconds ? classData.creadoEn.seconds * 1000 : classData.creadoEn) : new Date(),
+              alumnosInscritos: []
+          });
+        }
+      }
+
+      clasesAlumno.value = fetchedClasses;
+
     } catch (e: any) {
-      errorClasesAlumno.value = e.message || 'Error al cargar tus clases.';
+      console.error('Error al cargar clases del alumno:', e);
+      errorClasesAlumno.value = e.message;
     } finally {
       loadingClasesAlumno.value = false;
-    }
-  };
-
-  const unirseAClase = async () => {
-    joining.value = true;
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error('Usuario no autenticado.');
-      if (!joinClassCode.value) {
-        alert('Por favor, ingresa un código de clase.');
-        return false;
-      }
-
-      const classCode = joinClassCode.value.toUpperCase().trim();
-
-      const q = query(collection(db, 'clases'), where('codigoClase', '==', classCode));
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        alert('Clase no encontrada. Verifica el código e inténtalo de nuevo.');
-        return false;
-      }
-
-      const classDoc = querySnapshot.docs[0];
-      const claseData = classDoc.data();
-      const claseRef = doc(db, 'clases', classDoc.id);
-
-      if (claseData.alumnosInscritos && claseData.alumnosInscritos.includes(user.uid)) {
-        alert('Ya estás inscrito en esta clase.');
-        showJoinClassModal.value = false;
-        joinClassCode.value = '';
-        return false;
-      }
-
-      await updateDoc(claseRef, {
-        alumnosInscritos: arrayUnion(user.uid),
-      });
-
-      alert('¡Te has unido a la clase exitosamente!');
-      showJoinClassModal.value = false;
-      joinClassCode.value = '';
-      await cargarClasesAlumno();
-      return true;
-    } catch (e: any) {
-      alert('Error al unirte a la clase: ' + (e.message || e));
-      return false;
-    } finally {
-      joining.value = false;
     }
   };
 
@@ -112,9 +88,6 @@ export function useStudentClasses() {
     loadingClasesAlumno,
     errorClasesAlumno,
     showJoinClassModal,
-    joinClassCode,
-    joining,
     cargarClasesAlumno,
-    unirseAClase,
   };
 }
