@@ -8,51 +8,30 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block font-medium text-sm mb-1">Nombre de la clase*</label>
-            <input
-              v-model="form.nombreClase"
-              required
-              class="w-full border px-3 py-2 rounded"
-              placeholder="Nombre de la clase"
-            />
+            <input v-model="form.nombreClase" required class="w-full border px-3 py-2 rounded"
+              placeholder="Nombre de la clase" />
           </div>
           <div>
             <label class="block font-medium text-sm mb-1">%mín asistencias*</label>
-            <input
-              v-model.number="form.minAsistencias"
-              type="number"
-              min="0"
-              required
-              class="w-full border px-3 py-2 rounded"
-              placeholder="% min asistencias"
-            />
+            <input v-model.number="form.minAsistencias" type="number" min="0" max="100" required
+              @input="handleAsistenciaInput" class="w-full border px-3 py-2 rounded" placeholder="% min asistencias" />
           </div>
           <div>
             <label class="block font-medium text-sm mb-1">Grado y grupo</label>
             <div class="flex gap-2">
-              <input
-                v-model="form.grado"
-                required
-                class="w-full border px-3 py-2 rounded"
-                placeholder="Grado"
-              />
-              <input
-                v-model="form.grupo"
-                required
-                class="w-full border px-3 py-2 rounded"
-                placeholder="Grupo"
-              />
+              <input v-model="form.grado" required class="w-full border px-3 py-2 rounded" placeholder="Grado"
+                maxlength="1" inputmode="numeric" pattern="[0-9]" />
+
+              <input v-model="form.grupo" required class="w-full border px-3 py-2 rounded" placeholder="Grupo"
+                maxlength="1" pattern="[A-Za-z]" @input="form.grupo = form.grupo.toUpperCase()" />
             </div>
           </div>
         </div>
 
         <div class="mt-4">
           <label class="block font-medium text-sm mb-1">Nombre de la carrera</label>
-          <input
-            v-model="form.nombreCarrera"
-            required
-            class="w-full border px-3 py-2 rounded"
-            placeholder="Nombre de la carrera"
-          />
+          <input v-model="form.nombreCarrera" required class="w-full border px-3 py-2 rounded"
+            placeholder="Nombre de la carrera" />
         </div>
 
         <div class="mt-6">
@@ -61,19 +40,13 @@
             <div v-for="dia in diasSemana" :key="dia">
               <label class="block text-sm font-medium">{{ dia }}</label>
               <div class="flex gap-2">
-                <select
-                  v-model="form.horarios[dia].start"
-                  class="w-1/2 border px-2 py-2 rounded"
-                >
+                <select v-model="form.horarios[dia].start" class="w-1/2 border px-2 py-2 rounded">
                   <option value="">No hay clase</option>
                   <option v-for="time in timeOptions" :key="time" :value="time">
                     {{ time }}
                   </option>
                 </select>
-                <select
-                  v-model="form.horarios[dia].end"
-                  class="w-1/2 border px-2 py-2 rounded"
-                >
+                <select v-model="form.horarios[dia].end" class="w-1/2 border px-2 py-2 rounded">
                   <option value="">No hay clase</option>
                   <option v-for="time in timeOptions" :key="time" :value="time">
                     {{ time }}
@@ -85,18 +58,11 @@
         </div>
 
         <div class="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            @click="$emit('close')"
-            class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100"
-          >
+          <button type="button" @click="$emit('close')"
+            class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">
             Cancelar
           </button>
-          <button
-            type="submit"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
-            :disabled="saving"
-          >
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded" :disabled="saving">
             {{ saving ? 'Guardando...' : 'Guardar' }}
           </button>
         </div>
@@ -107,7 +73,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useClasses } from '../composables/useClasses'; // Ajusta la ruta
+import { useClasses } from '../composables/useClasses';
 
 const props = defineProps<{
   editando: boolean;
@@ -136,4 +102,18 @@ const handleSubmit = async () => {
     emit('close');
   }
 };
+
+const handleAsistenciaInput = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  let val = parseInt(input.value, 10);
+
+  if (val > 100) {
+    val = 100;
+  } else if (val < 1) {
+    val = 1;
+  }
+
+  form.minAsistencias = val;
+};
+
 </script>

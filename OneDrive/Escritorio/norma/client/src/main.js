@@ -14,7 +14,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'leaflet/dist/leaflet.css';
 import './assets/main.css';
 
-// ✅ Configuración de Firebase
+// Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDAf9yTU4io6ZpyphkWFpQu_zo6jrefSfU",
   authDomain: "listapp-f03db.firebaseapp.com",
@@ -25,26 +25,26 @@ const firebaseConfig = {
   measurementId: "G-PTTYVVBBE4"
 };
 
-// ✅ Inicializar Firebase solo una vez
+// Inicializar Firebase solo una vez
 const firebaseApp = initializeApp(firebaseConfig);
 
 // Inicializar Analytics (opcional)
 getAnalytics(firebaseApp);
 
-// ✅ Inicializar Auth y Firestore correctamente
+// Inicializar Auth y Firestore correctamente
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 
-// ✅ Hacer accesible `auth` y `db` en todo el proyecto (opcional pero recomendado)
+// Hacer accesible `auth` y `db` en todo el proyecto (opcional pero recomendado)
 export { auth, db };
 
 // Esperar a que se determine el estado de autenticación antes de montar la app
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    router.push('/home');
-  } else {
-    router.push('/login');
-  }
+  // if (user) {
+  //   router.push('/home');
+  // } else {
+  //   router.push('/login');
+  // }
 
   createApp(App).use(router).mount('#app');
 });

@@ -20,6 +20,12 @@ export function isValidText(text) {
   return regex.test(text.trim());
 }
 
+export function isValidTextNumbre(text) {
+  const regex = /^[a-zA-ZÁÉÍÓÚáéíóúÑñ0-9\s]+$/;
+  return regex.test(text.trim());
+}
+
+
 export function isValidNumber(num) {
   const regex = /^[0-9]+$/;
   return regex.test(num.trim());
