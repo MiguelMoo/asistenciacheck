@@ -8,56 +8,53 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block font-medium text-sm mb-1">Nombre de la clase*</label>
-            <input
-              v-model="form.nombreClase"
-              required
+            <!-- <input v-model="form.nombreClase" required
               class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nombre de la clase"
-            />
+              placeholder="Nombre de la clase" />  -->
+            <input v-model="form.nombreClase" required @input="form.nombreClase = form.nombreClase.slice(0, 50)"
+              class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nombre de la clase" />
+            <p v-if="form.nombreClase.length === 50" class="text-red-500 text-xs mt-1">
+              Has alcanzado el límite de 50 caracteres.
+            </p>
             <p v-if="!form.nombreClase" class="text-red-500 text-xs mt-1">Este campo es obligatorio.</p>
           </div>
 
           <div>
             <label class="block font-medium text-sm mb-1">% mín asistencias*</label>
-            <input
-              v-model.number="form.minAsistencias"
-              type="number"
-              min="0"
-              required
+            <input v-model.number="form.minAsistencias" type="number" min="0" max="100" required
               class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="% min asistencias"
-            />
+              placeholder="% min asistencias" />
+            <p v-if="form.minAsistencias > 100" class="text-red-500 text-xs mt-1">No se puede exceder del 100% </p>
             <p v-if="form.minAsistencias < 0" class="text-red-500 text-xs mt-1">No puede ser negativo.</p>
           </div>
 
           <div>
             <label class="block font-medium text-sm mb-1">Grado y grupo*</label>
             <div class="flex gap-2">
-              <input
-                v-model="form.grado"
-                required
+              <input v-model="form.grado" required @input="form.grado = form.grado.slice(0, 5)"
                 class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Grado"
-              />
-              <input
-                v-model="form.grupo"
-                required
+                placeholder="Grado" />
+              <input v-model="form.grupo" required @input="form.grupo = form.grupo.slice(0, 5)"
                 class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
-                placeholder="Grupo"
-              />
+                placeholder="Grupo" />
             </div>
-            <p v-if="!form.grado || !form.grupo" class="text-red-500 text-xs mt-1">Ambos campos son obligatorios.</p>
+            <p v-if="form.grado.length === 5 || form.grupo.length === 5" class="text-red-500 text-xs mt-1">
+              Grado y grupo no deben exceder 5 caracteres.
+            </p>
+            <p v-if="!form.grado || !form.grupo" class="text-red-500 text-xs mt-1">
+              Ambos campos son obligatorios.
+            </p>
           </div>
+
         </div>
 
         <div class="mt-4">
           <label class="block font-medium text-sm mb-1">Nombre de la carrera*</label>
-          <input
-            v-model="form.nombreCarrera"
-            required
+          <input v-model="form.nombreCarrera" required @input="form.nombreCarrera = form.nombreCarrera.slice(0, 50)"
             class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Nombre de la carrera"
-          />
+            placeholder="Nombre de la carrera" />
+          <p v-if="form.nombreCarrera.length === 50" class="text-red-500 text-xs mt-1">Has alcanzado el maximo de 50 caracteres</p>
           <p v-if="!form.nombreCarrera" class="text-red-500 text-xs mt-1">Este campo es obligatorio.</p>
         </div>
 
@@ -67,34 +64,25 @@
             <div v-for="dia in diasSemana" :key="dia">
               <label class="block text-sm font-medium">{{ dia }}</label>
               <div class="flex gap-2">
-                <select
-                  v-model="horariosUI[dia].start"
-                  class="w-1/2 border px-2 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
+                <select v-model="horariosUI[dia].start"
+                  class="w-1/2 border px-2 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option value="">No hay clase</option>
                   <option v-for="time in timeOptions" :key="time" :value="time">{{ time }}</option>
                 </select>
-                <select
-                  v-model="horariosUI[dia].end"
-                  class="w-1/2 border px-2 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
+                <select v-model="horariosUI[dia].end"
+                  class="w-1/2 border px-2 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option value="">No hay clase</option>
                   <option v-for="time in timeOptions" :key="time" :value="time">{{ time }}</option>
                 </select>
               </div>
-              <p
-                v-if="
-                  (horariosUI[dia].start && !horariosUI[dia].end) ||
-                  (!horariosUI[dia].start && horariosUI[dia].end)
-                "
-                class="text-red-500 text-xs mt-1"
-              >
+              <p v-if="
+                (horariosUI[dia].start && !horariosUI[dia].end) ||
+                (!horariosUI[dia].start && horariosUI[dia].end)
+              " class="text-red-500 text-xs mt-1">
                 Ambos campos deben estar completos o vacíos.
               </p>
-              <p
-                v-if="horariosUI[dia].start && horariosUI[dia].end && horariosUI[dia].start >= horariosUI[dia].end"
-                class="text-red-500 text-xs mt-1"
-              >
+              <p v-if="horariosUI[dia].start && horariosUI[dia].end && horariosUI[dia].start >= horariosUI[dia].end"
+                class="text-red-500 text-xs mt-1">
                 La hora de inicio debe ser anterior a la de fin.
               </p>
             </div>
@@ -102,18 +90,11 @@
         </div>
 
         <div class="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            @click="$emit('close')"
-            class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100"
-          >
+          <button type="button" @click="$emit('close')"
+            class="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100">
             Cancelar
           </button>
-          <button
-            type="submit"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
-            :disabled="saving"
-          >
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded" :disabled="saving">
             {{ saving ? 'Guardando...' : 'Guardar' }}
           </button>
         </div>
